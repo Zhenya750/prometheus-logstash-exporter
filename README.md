@@ -3,27 +3,29 @@ Logstash exporter
 
 Prometheus exporter for metrics provided by Node Stats API of Logstash.
 
-Building and running
---------------------
+## Build from source
+```shell
+$ git clone <repo-url>
+$ cd /prometheus-logstash-exporter
+$ git checkout <tag>
+$ GOOS=<your OS> GOARCH=<your ARCH> go build -o prometheus-logstash-exporter main.go
 
-    go get gitlab.com/alxrem/prometheus-logstash-exporter
-    cd ${GOPATH-$HOME/go}/src/gitlab.com/alxrem/prometheus-logstash-exporter
-    go build
-    ./prometheus-logstash-exporter <flags>
+```
+Show help:
+```shell
+$ prometheus-logstash-exporter --help
+```
 
-To see all available configuration flags:
+## Config parameters
+| Parameter            | ENV Parameter        | Default value | Description                                          |
+|:--------------------:|:--------------------:|:-------------:|:-----------------------------------------------------|
+| `web-listen-address` | `WEB_LISTEN_ADDRESS` | :9304         | Address to listen on for web interface and telemetry |
+| `web-telemetry-path` | `WEB_TELEMETRY_PATH` | /metrics      | Path under which to expose metrics                   |
+| `logstash-host`      | `LOGSTASH_HOST`      | localhost     | Host address of logstash server                      |
+| `logstash-port`      | `LOGSTASH_PORT`      | 9600          | Port of logstash server                              |
+| `logstash-timeout`   | `LOGSTASH_TIMEOUT`   | 5*time.Second | Timeout to get stats from logstash server            |
 
-    ./prometheus-logstash-exporter -h
-    
-Packages
---------
-
-Binary builds are available on the [releases page of Gitlab project](https://gitlab.com/alxrem/prometheus-logstash-exporter/-/releases).
-
-Packages for latest Debian and Ubuntu releases are available on
-[PackageCloud](https://packagecloud.io/alxrem/prometheus-logstash-exporter/).
-
-Docker images are available at [Docker Hub](https://hub.docker.com/r/alxrem/prometheus-logstash-exporter/).
-Pull the latest version with
-
-    docker pull alxrem/prometheus-logstash-exporter
+## Running
+```shell
+$ prometheus-logstash-exporter
+```
