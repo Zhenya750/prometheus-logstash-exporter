@@ -16,14 +16,15 @@ package main
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"time"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
+
+	"github.com/namsral/flag"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -251,17 +252,40 @@ func (e *Exporter) fetch(uri string) ([]byte, error) {
 	return body, nil
 }
 
-func main() {
+type Config struct {
+	ListenAddress string
+	MetricsPath   string
+	LogstashHost  string
+	LogstashPort  int
+	Timeout       time.Duration
+}
+
+func LoadConfig() Config {
 	var (
-		listenAddress = flag.String("web.listen-address", ":9304", "Address to listen on for web interface and telemetry.")
-		metricsPath   = flag.String("web.telemetry-path", "/metrics", "Path under which to expose metrics.")
-		logstashHost  = flag.String("logstash.host", "localhost", "Host address of logstash server.")
-		logstashPort  = flag.Int("logstash.port", 9600, "Port of logstash server.")
-		timeout       = flag.Duration("logstash.timeout", 5*time.Second, "Timeout to get stats from logstash server.")
+		listenAddress = flag.String("web-listen-address", ":9304", "Address to listen on for web interface and telemetry.")
+		metricsPath   = flag.String("web-telemetry-path", "/metrics", "Path under which to expose metrics.")
+		logstashHost  = flag.String("logstash-host", "localhost", "Host address of logstash server.")
+		logstashPort  = flag.Int("logstash-port", 9600, "Port of logstash server.")
+		timeout       = flag.Duration("logstash-timeout", 5*time.Second, "Timeout to get stats from logstash server.")
 	)
+
 	flag.Parse()
 
-	exporter := NewExporter(fmt.Sprintf("%s:%d", *logstashHost, *logstashPort), *timeout)
+	config := Config{
+		ListenAddress: *listenAddress,
+		MetricsPath:   *metricsPath,
+		LogstashHost:  *logstashHost,
+		LogstashPort:  *logstashPort,
+		Timeout:       *timeout,
+	}
+
+	return config
+}
+
+func main() {
+	config := LoadConfig()
+
+	exporter := NewExporter(fmt.Sprintf("%s:%d", config.LogstashHost, config.LogstashPort), config.Timeout)
 	prometheus.MustRegister(exporter)
 
 	go func() {
@@ -281,9 +305,9 @@ func main() {
 		}
 	}()
 
-	http.Handle(*metricsPath, promhttp.Handler())
+	http.Handle(config.MetricsPath, promhttp.Handler())
 	http.HandleFunc("/-/ping", func(w http.ResponseWriter, r *http.Request) {})
 
-	log.Infoln("Listening on", *listenAddress)
-	log.Fatal(http.ListenAndServe(*listenAddress, nil))
+	log.Infoln("Listening on", config.ListenAddress)
+	log.Fatal(http.ListenAndServe(config.ListenAddress, nil))
 }
