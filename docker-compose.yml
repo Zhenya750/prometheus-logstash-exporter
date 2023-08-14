@@ -1,21 +1,26 @@
-version: "3"
+version: "3.7"
+
 services:
   logstash:
     image: docker.elastic.co/logstash/logstash-oss:6.1.1
-    ports:
-    - "9600:9600"
     volumes:
     - ./docker-compose/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
     - ./docker-compose/events.json:/events.json
     command: ["-r"]
+    ports:
+    - "9600:9600"
+
   exporter:
     build: .
+    environment:
+      - LOGSTASH_HOST=logstash
+      - LOGSTASH_PORT=9600
     ports:
     - "9304:9304"
-    command: ["-logstash.host", "logstash"]
+
   prometheus:
-    image: prom/prometheus
-    ports:
-    - "9090:9090"
+    image: prom/prometheus:v2.45.0
     volumes:
     - ./docker-compose/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+    - "9090:9090"
